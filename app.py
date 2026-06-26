@@ -364,6 +364,41 @@ def place_order():
         )
     )
 
+# Order History
+@app.route("/order_history")
+def order_history():
+    if not session.get("logged_in"):
+        flash("Please login first.", "warning")
+        return redirect(url_for("login"))
+
+    user_id = session["user_id"]
+    db = get_db()
+    cur = db.cursor()
+
+    cur.execute(
+        """
+        SELECT
+            order_id,
+            total_price,
+            status,
+            payment_method,
+            order_date
+        FROM orders
+        WHERE user_id=%s
+        ORDER BY order_date DESC
+        """,
+        (user_id,)
+    )
+
+    orders = cur.fetchall()
+    cur.close()
+    db.close()
+
+    return render_template(
+        "order_history.html",
+        orders=orders
+    )
+
 # Order Summary
 @app.route("/order/<float:total_order_price>")
 def order(total_order_price):
