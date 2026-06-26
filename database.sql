@@ -62,8 +62,7 @@ CREATE TABLE order_items (
 );
 
 INSERT INTO users(email,password,user_type,address)
-VALUES
-(
+VALUES (
 'admin@crunchyfood.com',
 'pbkdf2:sha256:600000$replace_with_generated_hash',
 'admin',
