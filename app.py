@@ -302,10 +302,10 @@ def place_order():
         flash("Please login first.", "warning")
         return redirect(url_for("login"))
 
-    user_id = session.get("user_id")
+    user_id = session["user_id"]
     db = get_db()
     cur = db.cursor()
-    total_order_price = 0
+
     cur.execute(
         "SELECT * FROM cart WHERE user_id=%s",
         (user_id,)
@@ -317,41 +317,42 @@ def place_order():
         cur.close()
         db.close()
         return redirect(url_for("cart"))
+    total_order_price = 0
 
-    for cart_item in cart_items:
-        item_id = cart_item[2]
-        quantity = cart_item[5]
+    for item in cart_items:
+        total_order_price += float(item[6])
+
+    cur.execute(
+        """
+        INSERT INTO orders
+        (user_id, total_price)
+        VALUES (%s,%s)
+        """,
+        (user_id, total_order_price)
+    )
+
+    order_id = cur.lastrowid
+    for item in cart_items:
         cur.execute(
-            "SELECT * FROM menu_items WHERE item_id=%s",
-            (item_id,)
-        )
-        item = cur.fetchone()
-
-        if item:
-            item_name = item[1]
-            item_price = float(item[2])
-            total_item_price = item_price * quantity
-            total_order_price += total_item_price
-            cur.execute(
-                """
-                INSERT INTO orders
-                (user_id,item_id,item_name,item_price,quantity,total_price)
-                VALUES(%s,%s,%s,%s,%s,%s)
-                """,
-                (
-                    user_id,
-                    item_id,
-                    item_name,
-                    item_price,
-                    quantity,
-                    total_item_price
-                )
+            """
+            INSERT INTO order_items
+            (order_id,item_id,item_name,item_price,quantity,total_price)
+            VALUES(%s,%s,%s,%s,%s,%s)
+            """,
+            (
+                order_id,
+                item[2],
+                item[3],
+                item[4],
+                item[5],
+                item[6]
             )
+        )
+
     cur.execute(
         "DELETE FROM cart WHERE user_id=%s",
         (user_id,)
     )
-
     db.commit()
     cur.close()
     db.close()
@@ -359,7 +360,7 @@ def place_order():
     return redirect(
         url_for(
             "order",
-            total_order_price=total_order_price
+            order_id=order_id
         )
     )
 
