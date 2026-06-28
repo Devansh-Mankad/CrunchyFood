@@ -7,7 +7,7 @@ import os
 pymysql.install_as_MySQLdb()
 
 app = Flask(__name__)
-app.secret_key = "your_secret_key_here"
+app.secret_key = "FoodCrunchy"
 
 # MySQL Configuration
 app.config["MYSQL_HOST"] = "localhost"
